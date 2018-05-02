@@ -1,0 +1,69 @@
+Fault Injector Program Documentation
+Nicholas Engle, englens@mail.uc.edu
+
+---Code Description:
+  Fault Injector Runs on Python 2.7, using a GUI written with tkinter. It connects to a SITL instance using dronekit. It was developed using JBSim/SITL. 
+  
+
+---General Program Structure:
+  Tkinter is a GUI system for python that operates on various elements. GUI elements are positioned in Fault Injector using the pack() system and 
+  empty "Frames" for additional structure  On startup, the TK window is created along with all GUI elements. This is done with create_window() 
+  and its subfunctions,   called from the main() function. The TK main loop is then entered. FaultInjector uses several global 
+  variables for common elements, including vehicle values, current fault values, and often-referenced GUI elements. 
+  Functions that use global variables should include "global <variablename>" before use.
+
+  Fault Injector connects to an SITL instance using the python library "dronekit". This is done using the function
+   dronekit.connect(), which returns a vehicle object. This vehicle is used to interface with the drone in several functions.
+  vehicle.parameters['<param_name>'] returns a mutable list that allows the vehicle's parameters to be changed and read. vehicle.commands
+  returns the current waypoints/mission -- The current mission must be read with mission.download(), and after being edited, sent with
+  mission.upload().
+
+  TK buttons have a 'command' parameter, controlling what happens on button press. for example, the button
+  to simulate loss of GPS signal has the parameter "command=gps", and calls the gps() function.
+  This is how much of the GUI functions: using buttons to call command functions. The called functions are also shared by the file-based scenario code.
+
+  Scenarios are run using the function command_thread(), started from file_dialog(). After the user selects a file to be run,
+  command_thread() verifies that the scenario is valid, and begins a timer to count up in seconds. When it reaches
+  an event timestamp, it checks what event to run and executes the correct event function. Some event functions have
+  helper functions wrapping around them in this case. To add new functions to command_thread(), simply add a new case to the
+  list.
+
+  Three global values relate to the waypoint mission: mission_actual, mission_custom, and waypoints_been_modified. Mission actual stores
+  the mission as it was when Fault Injector connected to the drone, mission_custom stores the current mission, and waypoints_been_modified
+  is a boolean that determines whether or not mission_actual or mission_custom is to be used. Many mission functions read or write to
+  mission_custom, and send the changes to the vehicle. mission_actual is only used to reset the mission back to normal.
+
+---Feature/Function Description:
+  Constant Wind: Uses wind(). Creates and stores the wind speed and angle with a 3D vector. This is sent to the vehicle 
+  every second.
+
+  Turbulence: Set from wind(). Uses the simulator's turbulence settings.
+
+  Wind Gust: uses gust(). Using given period, intensity, and angle. Creates a thread that modulates the gust value up to the max intensity
+  and back down to zero, adding to the global wind at every step (the resultant vector is sent to the vehicle). This process
+  follows a simple negitive cosine curve.
+
+  GPS: Uses gps(). Simulates a loss of gps signal. This toggles every time the function is run. With the gps disabled the plane will have
+  difficulty determining it's precice location, resulting in position errors buliding up. Only the position the vehicle thinks it is at 
+  will be shown on screen, not its actual position.
+
+  Remote Control: Uses rc(). Simulates loss of radio signal.
+
+  Throttle Failsafe: Uses throttle(). Simulates a throttle failsafe.
+
+  Battery Failsafe: Uses battery(). Simulates a loss of battery power.
+
+  Ground Control Station Failsafe: Uses gcs(). Simulates a loss of connection to Ground Control Station. Will cause the vehicle to become unresponsive.
+
+  Vary Choordinates: Uses vary_wp() randomises a waypoints position by a given mean and standard deviation, in a random direction.
+  
+  Change Waypoint Location: Uses change_wp_loc(). Moves a given waypoint by a given amount x and y, in miles. This is approximated to latitude
+  and longitude, so it is not 100% accurate.
+
+  Set Waypoint: Uses set_wp(). Sets the latitude and longitude of a waypoint to given values.
+ 
+  Swap Waypoints, Reposition Waypoint Up, Reposition Waypoint Down: Uses swap_wp(), repo_up_wp(), repo_down_wp(). Rearranges waypoints.
+
+  Skip Waypoint: Uses skip_wp(). Sets a flag to skip a certian waypoint and instead continue to the next. This does not notify Mission Planner.
+
+  Delete Waypoint: Uses delete_wp(). Deletes a waypoint from the list. This will not notify Mission Planner.
