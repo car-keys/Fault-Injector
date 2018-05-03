@@ -2,7 +2,7 @@
 #from dronekit_sitl import SITL
 # Import DroneKit-Python
 from dronekit import connect, VehicleMode, CommandSequence
-from Tkinter import *
+from tkinter import *
 import time, sys, struct, os, math, csv, random, tkFileDialog
 try:
     import thread

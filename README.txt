@@ -12,7 +12,7 @@ It can also be modified to inject failures into other craft that can be simulate
 any variables in the simulation over mavlink.
 
 FaultInjector runs on python version 2.7. The following python libraries are dependencies:
-dronekit, Tkinter
+dronekit, Tkinter, tkFileDialog
 
 Setting up a SITL instance:
 Windows: http://ardupilot.org/dev/docs/sitl-native-on-windows.html
