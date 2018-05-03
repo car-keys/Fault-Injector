@@ -2,7 +2,7 @@
 #from dronekit_sitl import SITL
 # Import DroneKit-Python
 from dronekit import connect, VehicleMode, CommandSequence
-from tkinter import *
+from Tkinter import *
 import time, sys, struct, os, math, csv, random, tkFileDialog
 try:
     import thread
@@ -131,7 +131,7 @@ def disconnect():
 
 #grabs the mission from MAVProxy, and updates the display.
 def grab_mission():
-    global vehicle
+    global vehicle, waypoints_been_modified, mission_actual, mission_custom
     if connected:
         mission = vehicle.commands
         mission.download()
@@ -141,11 +141,9 @@ def grab_mission():
         command_list = []
         for cmd in mission:
             command_list.append(cmd)
-        global mission_actual, mission_custom, waypoints_been_modified
-        if waypoints_been_modified:
-            mission_custom = command_list
-        else:
-            mission_actual = command_list
+        waypoints_been_modified = False
+        mission_custom = command_list[:]
+        mission_actual = command_list[:]
         print('Misssion Grabbed')
         update_mission_readout()
     
@@ -301,7 +299,7 @@ def skip_wp(selected):
     global waypoint_info
     found = False
     for cmd in waypoint_info:
-        if cmd[0] == selected-1:
+        if cmd[0] == selected:
             if cmd[1] is None:
                 cmd[1] = True
             else:
@@ -310,7 +308,7 @@ def skip_wp(selected):
             break
     if not found:
         #if no entries into wp_info, make a new one and start the listener thread
-        new_wp_info(selected-1, skip=True)
+        new_wp_info(selected, skip=True)
         thread.start_new_thread(waypoint_listener, ())
 
 #sets the coordinates of a specified waypoint        
@@ -350,6 +348,7 @@ def repo_up_wp(selected):
     global mission_actual, mission_custom, waypoints_been_modified, waypoint_info
     if not waypoints_been_modified:
         mission_custom = mission_actual[:]
+        waypoints_been_modified = True
         waypoints_been_modified = True
     if selected-1 == 0:
         print('Error: cant move the top one down!')
@@ -412,7 +411,7 @@ def reset_wps():
     global mission_actual, mission_custom, waypoints_been_modified
     waypoints_been_modified = False
     send_mission()
-    update_mission_readout()
+    grab_mission()
     print('all waypoints reset.')
 
 #new entry to wp_info, allows arguments to be optional
@@ -724,8 +723,8 @@ def create_mission_pane(pane):
             popup_frame.destroy()
         popup_frame     = Frame(panel, bd=2, relief=GROOVE, padx=3, pady=3)
         button_frame = Frame(popup_frame)
-        up_button    = Button(button_frame, text='/\\', command=lambda: thread.start_new_thread(lambda: repo_up_wp(int(info.curselection()[0])), ()))
-        down_button  = Button(button_frame, text='\\/', command=lambda: thread.start_new_thread(lambda: repo_down_wp(int(info.curselection()[0])), ()))
+        up_button    = Button(button_frame, text='/\\', command=lambda: thread.start_new_thread(lambda: repo_up_wp(int(info.curselection()[0])+1), ()))
+        down_button  = Button(button_frame, text='\\/', command=lambda: thread.start_new_thread(lambda: repo_down_wp(int(info.curselection()[0])+1), ()))
         description  = Message(popup_frame, width=200, text='Use the left buttons to reorder the currently selected waypoint.')
         up_button.pack()
         down_button.pack()
@@ -739,7 +738,7 @@ def create_mission_pane(pane):
         if popup_frame != None:
             popup_frame.destroy()
         popup_frame     = Frame(panel, bd=2, relief=GROOVE, padx=3, pady=3)
-        skip_button = Button(popup_frame, text='Skip', command=lambda: thread.start_new_thread(lambda: skip_wp(int(info.curselection()[0])), ()))
+        skip_button = Button(popup_frame, text='Skip', command=lambda: thread.start_new_thread(lambda: skip_wp(int(info.curselection()[0])+2), ()))
         skip_button.pack()
         description  = Message(popup_frame, width=200, text='Skipped waypoints will stay in memory, but not be flown to. They will be greyed out in the waypoint window.')
         description.pack(side=LEFT)
